@@ -123,6 +123,25 @@ export async function setPredictionResult(id, result) {
   );
 }
 
+/**
+ * DB'de var olup henuz HIC tahmini uretilmemis maclari getirir.
+ * Backfill'in --mode=missing bayragi bu listeyi isler -> API'ye
+ * yeniden fixture istegi atmadan sadece form + H2H cagrilariyla
+ * tahmin urettigi icin cok az kota harcar.
+ */
+export async function getMatchesWithoutPredictions({ limit = 50 } = {}) {
+  const { rows } = await query(
+    `SELECT m.*
+       FROM matches m
+       LEFT JOIN predictions p ON p.match_id = m.id
+       WHERE p.id IS NULL
+       ORDER BY m.match_date ASC
+       LIMIT $1`,
+    [limit]
+  );
+  return rows;
+}
+
 export async function getPendingPredictionsForFinishedMatches() {
   const { rows } = await query(`
     SELECT p.*, m.home_goals, m.away_goals, m.status, m.home_team_id, m.away_team_id
