@@ -91,8 +91,8 @@ async function processFixture(fx, leagueAvg) {
 
   // 2) Form verileri (son 10 maç)
   const [homeLast, awayLast, h2hList] = await Promise.all([
-    getTeamLastMatches({ team: homeId, last: 10 }),
-    getTeamLastMatches({ team: awayId, last: 10 }),
+    getTeamLastMatches({ team: homeId, league: fx.league.id, season: fx.league.season, last: 10 }),
+    getTeamLastMatches({ team: awayId, league: fx.league.id, season: fx.league.season, last: 10 }),
     getH2H({ teamA: homeId, teamB: awayId, last: 5 }),
   ]);
 
