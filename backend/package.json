@@ -10,6 +10,7 @@
     "db:init": "node src/db/init.js",
     "predict:run": "node src/jobs/generatePredictions.js",
     "results:sync": "node src/jobs/syncResults.js",
+    "backfill": "node src/jobs/backfill.js",
     "test": "node tests/engine.smoke.mjs"
   },
   "dependencies": {
