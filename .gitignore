@@ -7,3 +7,9 @@ build/
 *.log
 .DS_Store
 coverage/
+
+
+
+# Next / TypeScript build artifacts
+frontend/.next/
+frontend/tsconfig.tsbuildinfo

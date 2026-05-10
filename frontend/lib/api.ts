@@ -1,3 +1,5 @@
+import type { Dict } from "./i18n";
+
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export type PredictionType = "SIDE" | "HOME_SCORES" | "AWAY_SCORES" | "TOTAL_GOALS";
@@ -91,43 +93,50 @@ export const api = {
     }>(`/archive/summary`),
 };
 
-/* ---------- Formatters ---------- */
+/* ---------- i18n-aware formatters ---------- */
 
-export function labelPrediction(p: Prediction): string {
+export function labelPrediction(p: Prediction, dict: Dict): string {
+  const L = dict.prediction_labels;
   switch (p.prediction_type) {
     case "SIDE":
       return p.predicted_value === "1"
-        ? "Ev sahibi kazanır"
+        ? L.side_home
         : p.predicted_value === "2"
-        ? "Deplasman kazanır"
-        : "Beraberlik";
+        ? L.side_away
+        : L.side_draw;
     case "HOME_SCORES":
-      return p.predicted_value === "YES" ? "Ev sahibi gol atar" : "Ev sahibi gol atamaz";
+      return p.predicted_value === "YES" ? L.home_scores_yes : L.home_scores_no;
     case "AWAY_SCORES":
-      return p.predicted_value === "YES" ? "Deplasman gol atar" : "Deplasman gol atamaz";
+      return p.predicted_value === "YES" ? L.away_scores_yes : L.away_scores_no;
     case "TOTAL_GOALS":
-      return p.predicted_value === "OVER_2_5" ? "2.5 Üst" : "2.5 Alt";
+      return p.predicted_value === "OVER_2_5" ? L.total_over : L.total_under;
     default:
       return p.predicted_value;
   }
 }
 
-export function resultBadge(result: PredictionResult) {
+export function resultBadge(result: PredictionResult, dict: Dict) {
   switch (result) {
     case "WON":
-      return { text: "Kazandı", cls: "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30" };
+      return { text: dict.result.won, cls: "bg-emerald-500/20 text-emerald-300 border border-emerald-400/30" };
     case "LOST":
-      return { text: "Kaybetti", cls: "bg-rose-500/20 text-rose-300 border border-rose-400/30" };
+      return { text: dict.result.lost, cls: "bg-rose-500/20 text-rose-300 border border-rose-400/30" };
     case "VOID":
-      return { text: "İptal", cls: "bg-zinc-500/20 text-zinc-300 border border-zinc-400/30" };
+      return { text: dict.result.void, cls: "bg-zinc-500/20 text-zinc-300 border border-zinc-400/30" };
     default:
-      return { text: "Beklemede", cls: "bg-amber-500/20 text-amber-300 border border-amber-400/30" };
+      return { text: dict.result.pending, cls: "bg-amber-500/20 text-amber-300 border border-amber-400/30" };
   }
 }
 
-export function formatMatchDate(iso: string): string {
+/** Locale-aware date formatter. `tr-TR` for Turkish, `en-GB` otherwise. */
+export function formatMatchDate(iso: string, lang: "en" | "tr" = "en"): string {
   const d = new Date(iso);
-  return d.toLocaleString("tr-TR", {
-    day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+  const locale = lang === "tr" ? "tr-TR" : "en-GB";
+  return d.toLocaleString(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
