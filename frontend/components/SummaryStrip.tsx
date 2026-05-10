@@ -1,3 +1,5 @@
+import type { Dict } from "@/lib/i18n";
+
 export function SummaryStrip({
   total,
   wins,
@@ -5,6 +7,7 @@ export function SummaryStrip({
   pending,
   success_rate,
   avg_confidence,
+  dict,
 }: {
   total: number;
   wins: number;
@@ -12,6 +15,7 @@ export function SummaryStrip({
   pending: number;
   success_rate: number;
   avg_confidence: number;
+  dict: Dict;
 }) {
   const Item = ({ label, value, cls = "" }: { label: string; value: string | number; cls?: string }) => (
     <div className={`card px-4 py-3 ${cls}`}>
@@ -22,11 +26,14 @@ export function SummaryStrip({
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-      <Item label="Toplam tahmin" value={total} />
-      <Item label="Kazanan" value={wins} cls="text-emerald-300" />
-      <Item label="Kaybeden" value={losses} cls="text-rose-300" />
-      <Item label="Bekleyen" value={pending} cls="text-amber-300" />
-      <Item label="Başarı / Ort. güven" value={`%${success_rate} / %${avg_confidence}`} />
+      <Item label={dict.summary.total} value={total} />
+      <Item label={dict.summary.wins} value={wins} cls="text-emerald-300" />
+      <Item label={dict.summary.losses} value={losses} cls="text-rose-300" />
+      <Item label={dict.summary.pending} value={pending} cls="text-amber-300" />
+      <Item
+        label={dict.summary.success_avg_confidence}
+        value={`%${success_rate} / %${avg_confidence}`}
+      />
     </div>
   );
 }

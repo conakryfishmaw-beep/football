@@ -2,6 +2,8 @@ import { api, Match } from "@/lib/api";
 import { MatchCard } from "@/components/MatchCard";
 import { Tabs } from "@/components/Tabs";
 import { SummaryStrip } from "@/components/SummaryStrip";
+import { getDict } from "@/lib/server-i18n";
+import type { Dict, Lang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,17 @@ async function safeSummary() {
   }
 }
 
-function MatchList({ matches, emptyText }: { matches: Match[]; emptyText: string }) {
+function MatchList({
+  matches,
+  emptyText,
+  dict,
+  lang,
+}: {
+  matches: Match[];
+  emptyText: string;
+  dict: Dict;
+  lang: Lang;
+}) {
   if (!matches.length) {
     return (
       <div className="card p-8 text-center text-pitch-300/70">
@@ -32,12 +44,14 @@ function MatchList({ matches, emptyText }: { matches: Match[]; emptyText: string
   }
   return (
     <div className="grid gap-3 md:grid-cols-2">
-      {matches.map((m) => <MatchCard key={m.id} match={m} />)}
+      {matches.map((m) => <MatchCard key={m.id} match={m} dict={dict} lang={lang} />)}
     </div>
   );
 }
 
 export default async function DashboardPage() {
+  const { lang, dict } = getDict();
+
   const [yesterday, today, upcoming, summary] = await Promise.all([
     safeList("yesterday"),
     safeList("today"),
@@ -51,37 +65,34 @@ export default async function DashboardPage() {
   ).length;
   const yesterdayRate = totalGradedYesterday > 0
     ? ((wonYesterday / totalGradedYesterday) * 100).toFixed(1)
-    : "—";
+    : dict.match.dash;
 
   const tabs = [
     {
       id: "yesterday",
-      label: `Dün (${wonYesterday}/${totalGradedYesterday} • %${yesterdayRate})`,
-      content: <MatchList matches={yesterday} emptyText="Dün için tahmin kaydı bulunamadı." />,
+      label: `${dict.dashboard.tab_yesterday} (${wonYesterday}/${totalGradedYesterday} • %${yesterdayRate})`,
+      content: <MatchList matches={yesterday} emptyText={dict.dashboard.empty_yesterday} dict={dict} lang={lang} />,
     },
     {
       id: "today",
-      label: `Bugün (${today.length})`,
-      content: <MatchList matches={today} emptyText="Bugün programında maç yok." />,
+      label: `${dict.dashboard.tab_today} (${today.length})`,
+      content: <MatchList matches={today} emptyText={dict.dashboard.empty_today} dict={dict} lang={lang} />,
     },
     {
       id: "upcoming",
-      label: `Gelecek 7 Gün (${upcoming.length})`,
-      content: <MatchList matches={upcoming} emptyText="Önümüzdeki hafta için fikstür yok." />,
+      label: `${dict.dashboard.tab_upcoming} (${upcoming.length})`,
+      content: <MatchList matches={upcoming} emptyText={dict.dashboard.empty_upcoming} dict={dict} lang={lang} />,
     },
   ];
 
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-pitch-300/80 text-sm">
-          AI, her maç için 4 farklı tahmin üretir; en yüksek güven skorlu olan öne çıkarılır.
-          Tüm tahminler arşivlenir — kaybeden de silinmez.
-        </p>
+        <h1 className="text-2xl font-semibold">{dict.dashboard.heading}</h1>
+        <p className="text-pitch-300/80 text-sm">{dict.dashboard.intro}</p>
       </div>
 
-      <SummaryStrip {...summary} />
+      <SummaryStrip {...summary} dict={dict} />
       <Tabs tabs={tabs} initial="today" />
     </div>
   );
