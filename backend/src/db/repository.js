@@ -138,6 +138,14 @@ export async function getPendingPredictionsForFinishedMatches() {
 
 /* ---------- team_stats / h2h ---------- */
 
+/** JSONB kolonları icin normalize: pg driver'i bazi tipleri (array gibi) otomatik
+ *  serialize etmiyor. Bu yuzden objeleri elle JSON string'e ceviriyoruz. */
+function toJsonb(v) {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "string") return v;
+  return JSON.stringify(v);
+}
+
 export async function upsertTeamStats(row) {
   await query(
     `INSERT INTO team_stats (
@@ -164,7 +172,7 @@ export async function upsertTeamStats(row) {
       row.last10_played, row.last10_wins, row.last10_draws, row.last10_losses,
       row.last10_goals_for, row.last10_goals_against,
       row.last10_scored_pct, row.last10_clean_pct, row.last10_over25_pct,
-      row.form_string, row.raw ?? null,
+      row.form_string, toJsonb(row.raw),
     ]
   );
 }
@@ -182,7 +190,7 @@ export async function upsertH2H(row) {
        draws           = EXCLUDED.draws,
        avg_total_goals = EXCLUDED.avg_total_goals,
        raw             = EXCLUDED.raw`,
-    [a, b, row.matches_played, row.team_a_wins, row.team_b_wins, row.draws, row.avg_total_goals, row.raw ?? null]
+    [a, b, row.matches_played, row.team_a_wins, row.team_b_wins, row.draws, row.avg_total_goals, toJsonb(row.raw)]
   );
 }
 
