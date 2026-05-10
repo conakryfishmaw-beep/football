@@ -1,6 +1,38 @@
 import type { Dict } from "./i18n";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+/**
+ * API base URL resolution
+ *
+ * - Server side (SSR/RSC): calls happen from the Node process, so relative
+ *   URLs like "/api" are invalid (no host). We read INTERNAL_API_URL first
+ *   (direct backend on localhost:4000, no Nginx hop) and fall back to the
+ *   public URL. Build-time env vars are fine here because Next inlines them.
+ *
+ * - Client side (browser): the fetch runs on the user's machine, so a
+ *   relative URL "/api" is exactly what we want — the browser hits the same
+ *   origin and Nginx proxies to the backend. This avoids CORS and works
+ *   regardless of the public hostname/IP/domain.
+ */
+const INTERNAL_BASE =
+  process.env.INTERNAL_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://127.0.0.1:4000";
+
+const PUBLIC_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:4000";
+
+function resolveUrl(path: string): string {
+  // `typeof window` is "undefined" on the server, "object" in the browser.
+  const base = typeof window === "undefined" ? INTERNAL_BASE : PUBLIC_BASE;
+
+  // If the chosen base is a relative path (e.g. "/api"), only the browser
+  // can use it — the server would produce an invalid URL. In practice the
+  // server branch always uses INTERNAL_BASE (absolute) so this is a safety
+  // net for accidental misconfiguration.
+  if (base.startsWith("/") && typeof window === "undefined") {
+    return `http://127.0.0.1:4000${path}`;
+  }
+  return `${base}${path}`;
+}
 
 export type PredictionType = "SIDE" | "HOME_SCORES" | "AWAY_SCORES" | "TOTAL_GOALS";
 export type PredictionResult = "PENDING" | "WON" | "LOST" | "VOID";
@@ -65,8 +97,8 @@ export interface MatchDetail {
   h2h: H2H | null;
 }
 
-async function http<T>(path: string, revalidate = 60): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { next: { revalidate } });
+async function http<T>(path: string, revalidate = 0): Promise<T> {
+  const res = await fetch(resolveUrl(path), { next: { revalidate } });
   if (!res.ok) throw new Error(`API ${path} failed: ${res.status}`);
   return res.json() as Promise<T>;
 }
